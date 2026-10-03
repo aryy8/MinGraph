@@ -149,7 +149,7 @@ function AutocompleteInput({
           {loading ? <li className="autocomplete-status">Searching...</li> : null}
           {error ? <li className="autocomplete-error">{error}</li> : null}
           {!loading && !error && results.length === 0 ? (
-            <li className="autocomplete-status">No matching roads found in Jaipur</li>
+            <li className="autocomplete-status">No matching places found in or near Jaipur</li>
           ) : null}
           {!loading &&
             results.map((r) => (
@@ -161,7 +161,10 @@ function AutocompleteInput({
                 onClick={() => handlePick(r)}
               >
                 <div className="item-title">{r.name.split(",")[0]}</div>
-                <div className="item-subtitle">{r.name}</div>
+                <div className="item-subtitle">
+                  {r.distanceKm !== undefined ? `${r.distanceKm} km • ` : ""}
+                  {r.name}
+                </div>
               </li>
             ))}
         </ul>

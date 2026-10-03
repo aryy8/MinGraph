@@ -3,9 +3,9 @@ export interface LngLat {
   lat: number;
 }
 
-/** Graph coverage: walled city, Amer to the north, airport and Sitapura to the south. */
-export const JAIPUR_BBOX = { west: 75.68, south: 26.78, east: 75.95, north: 27.02 } as const;
-export const JAIPUR_CENTER: LngLat = { lng: 75.8, lat: 26.9 };
+/** Graph coverage: greater Jaipur from Manipal & Bagru in west to Amer & Kukas in north, Sitapura & Ring Road south, Bassi east. */
+export const JAIPUR_BBOX = { west: 75.50, south: 26.70, east: 76.05, north: 27.10 } as const;
+export const JAIPUR_CENTER: LngLat = { lng: 75.78, lat: 26.90 };
 
 export interface Landmark extends LngLat {
   id: string;
@@ -17,6 +17,7 @@ export const LANDMARKS: readonly Landmark[] = [
   { id: "jaipur-junction", name: "Jaipur Junction", lat: 26.91982, lng: 75.78757 },
   { id: "amer-fort", name: "Amer Fort", lat: 26.98553, lng: 75.85133 },
   { id: "jaipur-airport", name: "Jaipur Airport", lat: 26.82418, lng: 75.81215 },
+  { id: "manipal-univ", name: "Manipal Univ", lat: 26.8429, lng: 75.5654 },
   { id: "albert-hall", name: "Albert Hall", lat: 26.91164, lng: 75.81954 },
 ];
 

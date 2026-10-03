@@ -24,7 +24,7 @@ export interface RoadGraph {
 }
 
 async function fetchBuffer(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Could not load ${url} (HTTP ${res.status})`);
   return res.arrayBuffer();
 }
@@ -35,14 +35,15 @@ let cached: Promise<RoadGraph> | null = null;
 export function loadGraph(base = "/data"): Promise<RoadGraph> {
   if (cached) return cached;
   cached = (async () => {
-    const metaRes = await fetch(`${base}/meta.json`);
+    const metaRes = await fetch(`${base}/meta.json?t=${Date.now()}`, { cache: "no-cache" });
     if (!metaRes.ok) throw new Error("Road network metadata is missing");
     const meta = (await metaRes.json()) as GraphMeta;
+    const v = encodeURIComponent(meta.generatedAt);
     const [nodes, offsets, targets, weights] = await Promise.all([
-      fetchBuffer(`${base}/nodes.bin`),
-      fetchBuffer(`${base}/offsets.bin`),
-      fetchBuffer(`${base}/targets.bin`),
-      fetchBuffer(`${base}/weights.bin`),
+      fetchBuffer(`${base}/nodes.bin?v=${v}`),
+      fetchBuffer(`${base}/offsets.bin?v=${v}`),
+      fetchBuffer(`${base}/targets.bin?v=${v}`),
+      fetchBuffer(`${base}/weights.bin?v=${v}`),
     ]);
     const graph: RoadGraph = {
       meta,

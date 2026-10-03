@@ -22,19 +22,7 @@ import { fmtDuration, fmtKm } from "../lib/format";
 // MapView must be loaded client-side only (MapLibre and WebGL require window)
 const MapView = dynamic(() => import("../components/MapView"), {
   ssr: false,
-  loading: () => (
-    <div
-      className="map-frame"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#F6F4EF",
-      }}
-    >
-      <span className="spec-label">Loading Jaipur Map Canvas...</span>
-    </div>
-  ),
+  loading: () => <div className="map-frame" />,
 });
 
 function extractBaseRoads(graph: RoadGraph): Float32Array {
@@ -131,18 +119,23 @@ export default function MinGraphApp() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [playback]);
 
-  // Snapping function
+  // Snapping function: snaps any location in or close to Jaipur to the road network
   const handleSnap = useCallback(
     (coords: LngLat): { nodeId: number; snapDistance: number } | null => {
       if (!spatialIndex || !graph) return null;
-      if (!insideBbox(coords)) {
-        setStatusMessage("Point is outside the Jaipur survey bounds.");
-        return null;
-      }
       const match = spatialIndex.nearest(coords.lng, coords.lat);
       if (!match) {
-        setStatusMessage("No road node near this location.");
+        setStatusMessage("Could not locate a road near this position.");
         return null;
+      }
+      if (match.distance > 60000) {
+        setStatusMessage(`Selected location is too far from Jaipur road network (${fmtKm(match.distance)}).`);
+        return null;
+      }
+      if (match.distance > 2500) {
+        setStatusMessage(`Location snapped ${fmtKm(match.distance)} to nearest road in network.`);
+      } else {
+        setStatusMessage(null);
       }
       return { nodeId: match.node, snapDistance: match.distance };
     },

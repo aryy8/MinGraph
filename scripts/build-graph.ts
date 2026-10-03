@@ -17,8 +17,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
-// Covers the walled city, Amer to the north, the airport and Sitapura to the south.
-const BBOX = { south: 26.78, west: 75.68, north: 27.02, east: 75.95 };
+// Covers greater Jaipur: Bagru and Manipal to the west, Amer and Kukas to the north,
+// Airport, Sitapura, and Ring Road to the south, Kanota and Bassi to the east.
+const BBOX = { south: 26.70, west: 75.50, north: 27.10, east: 76.05 };
 const TILE_ROWS = 3;
 const TILE_COLS = 3;
 
@@ -35,8 +36,8 @@ const HIGHWAY_TYPES = [
 
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+  "https://z.overpass-api.de/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
 ];
 
@@ -91,6 +92,7 @@ async function fetchTile(index: number, s: number, w: number, n: number, e: numb
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
           "User-Agent": "MinGraph/1.0 (graph build script)",
+          Accept: "application/json",
         },
         body: "data=" + encodeURIComponent(query),
         signal: controller.signal,

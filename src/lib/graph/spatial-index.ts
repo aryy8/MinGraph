@@ -54,13 +54,14 @@ export class SpatialIndex {
   }
 
   /** Returns the nearest node and its distance in meters, searching outward ring by ring. */
-  nearest(lng: number, lat: number, maxRings = 60): { node: number; distance: number } | null {
-    const cx = Math.floor((lng - this.minLng) / this.cellSize);
-    const cy = Math.floor((lat - this.minLat) / this.cellSize);
+  nearest(lng: number, lat: number, maxRings = 300): { node: number; distance: number } | null {
+    const cx = Math.max(0, Math.min(this.cols - 1, Math.floor((lng - this.minLng) / this.cellSize)));
+    const cy = Math.max(0, Math.min(this.rows - 1, Math.floor((lat - this.minLat) / this.cellSize)));
     const kx = Math.cos((lat * Math.PI) / 180);
+    const limit = Math.max(maxRings, Math.max(this.cols, this.rows));
     let best = -1;
     let bestD2 = Infinity;
-    for (let ring = 0; ring <= maxRings; ring++) {
+    for (let ring = 0; ring <= limit; ring++) {
       for (let y = cy - ring; y <= cy + ring; y++) {
         if (y < 0 || y >= this.rows) continue;
         const onEdgeRow = y === cy - ring || y === cy + ring;

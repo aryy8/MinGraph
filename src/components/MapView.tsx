@@ -5,10 +5,11 @@ import {
   Map as MlMap,
   Marker,
   NavigationControl,
+  setWorkerUrl,
+  setWorkerCount,
   type MapMouseEvent,
   type StyleSpecification,
 } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { LineLayer } from "@deck.gl/layers";
 import type { Layer } from "@deck.gl/core";
@@ -17,6 +18,12 @@ import type { Playback } from "../lib/playback";
 import { PALETTES, traceLayers, type Hue, type PreparedTrace } from "./trace-layers";
 
 const STYLE_URL = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+
+// Explicitly register local worker URL to prevent Next.js / Turbopack bundle path issues
+if (typeof window !== "undefined") {
+  setWorkerUrl("/maplibre-gl-worker.mjs");
+  setWorkerCount(2);
+}
 
 // Default self-contained paper atlas style that never fails offline or behind firewalls
 const DEFAULT_STYLE: StyleSpecification = {
@@ -84,15 +91,16 @@ export default function MapView({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const pad = 0.04;
+    const pad = 0.08;
 
     // Start with the local paper style so initialization is instantaneous and 100% reliable
     const map = new MlMap({
       container,
       style: DEFAULT_STYLE,
+      maxCanvasSize: [4096, 4096],
       center: [JAIPUR_CENTER.lng, JAIPUR_CENTER.lat],
-      zoom: 11.4,
-      minZoom: 10,
+      zoom: 10.8,
+      minZoom: 9.0,
       maxZoom: 18,
       maxBounds: [
         [JAIPUR_BBOX.west - pad, JAIPUR_BBOX.south - pad],
@@ -119,8 +127,13 @@ export default function MapView({
         if (!res.ok) throw new Error("CARTO style unavailable");
         return res.json();
       })
-      .then((cartoStyle) => {
-        if (mapRef.current) {
+      .then(async (cartoStyle) => {
+        // Verify vector tiles are also reachable before applying style
+        const tileCheck = await fetch(
+          "https://tiles.basemaps.cartocdn.com/vector/carto.streets/v1/0/0/0.mvt",
+          { signal: AbortSignal.timeout(1500) }
+        ).catch(() => null);
+        if (tileCheck && tileCheck.ok && mapRef.current) {
           mapRef.current.setStyle(cartoStyle);
         }
       })
@@ -130,7 +143,6 @@ export default function MapView({
 
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(container);
-    // Trigger initial resize after next animation frame to ensure layout is computed
     requestAnimationFrame(() => map.resize());
 
     const markers = markersRef.current;
@@ -148,7 +160,7 @@ export default function MapView({
     };
   }, []);
 
-  // Start / end markers
+  // Start / end markers and viewport framing
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -169,6 +181,25 @@ export default function MapView({
     };
     sync("a", start);
     sync("b", end);
+
+    // Auto-frame map to ensure selected markers are in view
+    if (start && end) {
+      const minLng = Math.min(start.lng, end.lng);
+      const maxLng = Math.max(start.lng, end.lng);
+      const minLat = Math.min(start.lat, end.lat);
+      const maxLat = Math.max(start.lat, end.lat);
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 80, maxZoom: 14, duration: 750 }
+      );
+    } else if (start && !end) {
+      map.easeTo({ center: [start.lng, start.lat], duration: 600 });
+    } else if (!start && end) {
+      map.easeTo({ center: [end.lng, end.lat], duration: 600 });
+    }
   }, [start, end]);
 
   // Per-frame layer updates, driven by the playback clock
