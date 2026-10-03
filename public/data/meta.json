@@ -1,0 +1,38 @@
+{
+  "name": "Jaipur",
+  "nodes": 405464,
+  "edges": 864426,
+  "bbox": [
+    75.5,
+    26.7,
+    76.05,
+    27.1
+  ],
+  "totalEdgeLengthKm": 29532.8,
+  "highwayTypes": [
+    "motorway",
+    "motorway_link",
+    "trunk",
+    "trunk_link",
+    "primary",
+    "primary_link",
+    "secondary",
+    "secondary_link",
+    "tertiary",
+    "tertiary_link",
+    "unclassified",
+    "unclassified_link",
+    "residential",
+    "residential_link",
+    "living_street",
+    "living_street_link"
+  ],
+  "generatedAt": "2026-10-03T14:43:58.498Z",
+  "source": "OpenStreetMap contributors, via the Overpass API (ODbL)",
+  "files": {
+    "nodes": "nodes.bin",
+    "offsets": "offsets.bin",
+    "targets": "targets.bin",
+    "weights": "weights.bin"
+  }
+}
