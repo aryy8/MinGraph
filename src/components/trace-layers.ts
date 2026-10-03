@@ -25,7 +25,7 @@ export const PALETTES: Record<Hue, Palette> = {
   terra: { pale: [240, 210, 192], deep: [194, 65, 12], frontier: [110, 36, 6], route: [194, 65, 12] },
 };
 
-const PAPER: [number, number, number, number] = [246, 244, 239, 255];
+const PAPER: [number, number, number, number] = [255, 255, 255, 255];
 
 const FILTER = new DataFilterExtension({ filterSize: 1 });
 

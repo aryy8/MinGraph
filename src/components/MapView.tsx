@@ -25,7 +25,7 @@ if (typeof window !== "undefined") {
   setWorkerCount(2);
 }
 
-// Default self-contained paper atlas style that never fails offline or behind firewalls
+// Default self-contained white map style that never fails offline or behind firewalls
 const DEFAULT_STYLE: StyleSpecification = {
   version: 8,
   sources: {},
@@ -34,7 +34,7 @@ const DEFAULT_STYLE: StyleSpecification = {
       id: "background",
       type: "background",
       paint: {
-        "background-color": "#F6F4EF",
+        "background-color": "#FFFFFF",
       },
     },
   ],
@@ -225,7 +225,7 @@ export default function MapView({
             },
             widthUnits: "pixels",
             getWidth: 0.85,
-            getColor: [215, 211, 202, 220],
+            getColor: [220, 224, 228, 230],
             parameters: { depthCompare: "always" },
           })
         );

@@ -2,13 +2,13 @@
 @import "maplibre-gl/dist/maplibre-gl.css";
 
 :root {
-  --paper: #F6F4EF;
-  --paper-elevated: #ECE8E0;
-  --ink: #1C1B19;
-  --ink-muted: #57534E;
-  --ink-faint: #A8A29E;
-  --border: #D9D5CC;
-  --border-strong: #BCB6A8;
+  --paper: #FFFFFF;
+  --paper-elevated: #F4F4F5;
+  --ink: #111827;
+  --ink-muted: #4B5563;
+  --ink-faint: #9CA3AF;
+  --border: #E5E7EB;
+  --border-strong: #D1D5DB;
   --accent: #C2410C;
   --accent-faint: #FFEDD5;
   --blue: #1F4E79;
@@ -703,7 +703,7 @@ body {
   position: absolute;
   top: 14px;
   left: 14px;
-  background-color: rgba(246, 244, 239, 0.95);
+  background-color: rgba(255, 255, 255, 0.95);
   border: 1px solid var(--border);
   border-radius: 2px;
   padding: 4px 8px;
