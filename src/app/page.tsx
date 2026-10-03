@@ -7,7 +7,7 @@ import type { Map as MlMap, LngLatBoundsLike } from "maplibre-gl";
 import { loadGraph, type RoadGraph } from "../lib/graph/load";
 import { SpatialIndex } from "../lib/graph/spatial-index";
 import { insideBbox, type LngLat } from "../lib/graph/geo";
-import { ALGORITHMS, type AlgorithmId, type RunResult } from "../lib/algorithms/types";
+import { ALGORITHMS, algorithmInfo, type AlgorithmId, type RunResult } from "../lib/algorithms/types";
 import { runAlgorithm } from "../lib/algorithms/pool";
 import { Playback } from "../lib/playback";
 import { prepareTrace, type PreparedTrace } from "../components/trace-layers";
@@ -315,7 +315,10 @@ export default function MinGraphApp() {
 
         {mode === "simulate" ? (
           <div className="sidebar-section">
-            <span className="spec-label">Algorithm</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span className="spec-label" style={{ marginBottom: 0 }}>Algorithm</span>
+              <code className="complexity-badge">{algorithmInfo(simAlgo).timeComplexity}</code>
+            </div>
             <Segmented
               id="algo-picker"
               label="Pathfinding Algorithm"

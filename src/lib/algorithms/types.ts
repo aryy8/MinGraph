@@ -8,13 +8,52 @@ export interface AlgorithmInfo {
   short: string;
   /** Number of search roots, used to convert steps to nodes visited. */
   roots: number;
+  timeComplexity: string;
+  spaceComplexity: string;
+  complexityNote: string;
 }
 
 export const ALGORITHMS: readonly AlgorithmInfo[] = [
-  { id: "dijkstra", code: 0, name: "Dijkstra", short: "Dijkstra", roots: 1 },
-  { id: "astar", code: 1, name: "A*", short: "A*", roots: 1 },
-  { id: "bfs", code: 2, name: "BFS", short: "BFS", roots: 1 },
-  { id: "bidirectional", code: 3, name: "Bidirectional Dijkstra", short: "Bidir.", roots: 2 },
+  {
+    id: "dijkstra",
+    code: 0,
+    name: "Dijkstra",
+    short: "Dijkstra",
+    roots: 1,
+    timeComplexity: "O((V + E) log V)",
+    spaceComplexity: "O(V)",
+    complexityNote: "Uniform radial expansion with indexed binary heap; guaranteed optimal.",
+  },
+  {
+    id: "astar",
+    code: 1,
+    name: "A*",
+    short: "A*",
+    roots: 1,
+    timeComplexity: "O(E log V)",
+    spaceComplexity: "O(V)",
+    complexityNote: "Heuristic-guided greedy expansion toward target; optimal with admissible haversine.",
+  },
+  {
+    id: "bfs",
+    code: 2,
+    name: "BFS",
+    short: "BFS",
+    roots: 1,
+    timeComplexity: "O(V + E)",
+    spaceComplexity: "O(V)",
+    complexityNote: "FIFO queue traversal; optimal for hop count, suboptimal for road meters.",
+  },
+  {
+    id: "bidirectional",
+    code: 3,
+    name: "Bidirectional Dijkstra",
+    short: "Bidir.",
+    roots: 2,
+    timeComplexity: "O((V + E) log V)",
+    spaceComplexity: "O(V)",
+    complexityNote: "Two simultaneous frontiers meeting in middle; ~50% reduction in search radius.",
+  },
 ];
 
 export const ALGORITHM_IDS: readonly AlgorithmId[] = ALGORITHMS.map((a) => a.id);

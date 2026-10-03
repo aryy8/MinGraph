@@ -3,6 +3,9 @@ import { algorithmInfo, type AlgorithmId, type RunResult } from "./types";
 export interface CompareRow {
   id: AlgorithmId;
   name: string;
+  timeComplexity: string;
+  spaceComplexity: string;
+  complexityNote: string;
   nodesVisited: number;
   edgesRelaxed: number;
   distance: number;
@@ -29,15 +32,21 @@ function same(a: number, b: number): boolean {
 export function summarize(results: RunResult[]): CompareSummary {
   const found = results.filter((r) => r.found);
   const optimalDistance = found.length ? Math.min(...found.map((r) => r.distance)) : -1;
-  const rows: CompareRow[] = results.map((r) => ({
-    id: r.algorithm,
-    name: algorithmInfo(r.algorithm).name,
-    nodesVisited: r.nodesVisited,
-    edgesRelaxed: r.edgesRelaxed,
-    distance: r.distance,
-    computeMs: r.computeMs,
-    optimal: r.found && same(r.distance, optimalDistance),
-  }));
+  const rows: CompareRow[] = results.map((r) => {
+    const info = algorithmInfo(r.algorithm);
+    return {
+      id: r.algorithm,
+      name: info.name,
+      timeComplexity: info.timeComplexity,
+      spaceComplexity: info.spaceComplexity,
+      complexityNote: info.complexityNote,
+      nodesVisited: r.nodesVisited,
+      edgesRelaxed: r.edgesRelaxed,
+      distance: r.distance,
+      computeMs: r.computeMs,
+      optimal: r.found && same(r.distance, optimalDistance),
+    };
+  });
   const min = (f: (r: CompareRow) => number) => Math.min(...rows.map(f));
   return {
     rows,

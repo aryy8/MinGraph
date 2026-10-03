@@ -30,15 +30,16 @@ export function CompareResults({ results, compareAlgos }: CompareResultsProps) {
       </div>
 
       <div className="table-wrapper">
-        <table className="spec-table compare-table">
+        <table className="compare-table">
           <thead>
             <tr>
-              <th scope="col" className="spec-label col-algo">Algorithm</th>
-              <th scope="col" className="spec-label num">Visited</th>
-              <th scope="col" className="spec-label num">Relaxed</th>
-              <th scope="col" className="spec-label num">Distance</th>
-              <th scope="col" className="spec-label num">Compute</th>
-              <th scope="col" className="spec-label num">Optimal</th>
+              <th scope="col" className="th-algo">Algorithm</th>
+              <th scope="col" className="th-complexity">Time Complx</th>
+              <th scope="col" className="th-num">Visited</th>
+              <th scope="col" className="th-num">Relaxed</th>
+              <th scope="col" className="th-num">Distance</th>
+              <th scope="col" className="th-num">Compute</th>
+              <th scope="col" className="th-center">Optimal</th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +59,9 @@ export function CompareResults({ results, compareAlgos }: CompareResultsProps) {
                     />
                     <span className="algo-name">{row.name}</span>
                   </td>
+                  <td className="col-complexity">
+                    <code className="complexity-badge">{row.timeComplexity}</code>
+                  </td>
                   <td className={`num ${bestVisited ? "cell-best" : ""}`}>
                     {fmtInt(row.nodesVisited)}
                   </td>
@@ -70,7 +74,7 @@ export function CompareResults({ results, compareAlgos }: CompareResultsProps) {
                   <td className={`num ${bestTime ? "cell-best" : ""}`}>
                     {fmtMs(row.computeMs)}
                   </td>
-                  <td className="num">
+                  <td className="cell-optimal">
                     {row.optimal ? (
                       <span className="optimal-yes">Yes</span>
                     ) : (
@@ -82,6 +86,30 @@ export function CompareResults({ results, compareAlgos }: CompareResultsProps) {
             })}
           </tbody>
         </table>
+      </div>
+
+      <div className="complexity-section">
+        <span className="spec-label">Theoretical Complexity</span>
+        <div className="complexity-grid">
+          {summary.rows.map((row) => (
+            <div key={`comp-${row.id}`} className="complexity-card">
+              <div className="complexity-header">
+                <span
+                  className="swatch"
+                  style={{ backgroundColor: barColor(row.id) }}
+                  aria-hidden
+                />
+                <span className="complexity-name">{row.name}</span>
+                <code className="complexity-pill">{row.timeComplexity}</code>
+              </div>
+              <p className="complexity-desc">
+                <span className="complexity-space">Space: <code>{row.spaceComplexity}</code></span>
+                {" • "}
+                {row.complexityNote}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="chart-section">

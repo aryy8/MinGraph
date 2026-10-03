@@ -584,24 +584,115 @@ body {
 
 .table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background-color: #FFFFFF;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 5px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 3px;
 }
 
 .compare-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 11px;
 }
 
-.compare-table th,
+.compare-table thead {
+  display: table-header-group !important;
+  background-color: #F9FAFB;
+}
+
+.compare-table tbody {
+  display: table-row-group !important;
+}
+
+.compare-table tr {
+  display: table-row !important;
+}
+
+.compare-table th {
+  display: table-cell !important;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  padding: 7px 8px;
+  border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.compare-table th.th-algo {
+  text-align: left;
+}
+
+.compare-table th.th-complexity {
+  text-align: left;
+}
+
+.compare-table th.th-num {
+  text-align: right;
+}
+
+.compare-table th.th-center {
+  text-align: center;
+}
+
 .compare-table td {
-  padding: 5px 4px;
+  display: table-cell !important;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--paper-elevated);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.compare-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.compare-table tbody tr:hover td {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .col-algo {
   text-align: left;
-  white-space: nowrap;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .algo-name {
-  font-weight: 500;
+  font-size: 11px;
+}
+
+.col-complexity {
+  text-align: left;
+}
+
+.complexity-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  background-color: #F3F4F6;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 .cell-best {
@@ -610,13 +701,87 @@ body {
   background-color: rgba(194, 65, 12, 0.08);
 }
 
+.cell-optimal {
+  text-align: center;
+}
+
 .optimal-yes {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
   color: #15803D;
-  font-weight: 600;
+  background-color: #DCFCE7;
+  padding: 1px 5px;
+  border-radius: 2px;
 }
 
 .optimal-no {
-  color: #A8A29E;
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #6B7280;
+  background-color: #F3F4F6;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* Time & Space Complexity Cards */
+.complexity-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.complexity-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.complexity-card {
+  padding: 8px 10px;
+  background-color: #F9FAFB;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.complexity-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.complexity-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: 1;
+}
+
+.complexity-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background-color: #FFFFFF;
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.complexity-desc {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.complexity-space code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* Bar Chart */
