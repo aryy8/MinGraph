@@ -111,7 +111,7 @@ function AutocompleteInput({
   return (
     <div ref={wrapperRef} className="autocomplete-wrapper">
       <div className="input-group">
-        <label htmlFor={id} className="point-badge">
+        <label htmlFor={id} className={`point-badge point-badge-${label.toLowerCase()}`}>
           {label}
         </label>
         <input

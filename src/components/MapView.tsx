@@ -55,12 +55,25 @@ export interface MapViewProps {
 
 const ACCENT: [number, number, number] = [194, 65, 12];
 
-function markerElement(label: string): HTMLElement {
-  const el = document.createElement("div");
-  el.className = "mg-marker";
-  el.textContent = label;
-  el.setAttribute("aria-label", label === "A" ? "Start point" : "End point");
-  return el;
+function createPinElement(label: string): HTMLElement {
+  const pin = document.createElement("div");
+  pin.className = `mg-pin mg-pin-${label.toLowerCase()}`;
+  pin.setAttribute("aria-label", label === "A" ? "Start point" : "End point");
+
+  const badge = document.createElement("div");
+  badge.className = "mg-pin-badge";
+  badge.textContent = label;
+
+  const stem = document.createElement("div");
+  stem.className = "mg-pin-stem";
+
+  const dot = document.createElement("div");
+  dot.className = "mg-pin-dot";
+
+  pin.appendChild(badge);
+  pin.appendChild(stem);
+  pin.appendChild(dot);
+  return pin;
 }
 
 export default function MapView({
@@ -141,6 +154,11 @@ export default function MapView({
         // Fallback paper style is already active
       });
 
+    // Dedicated markers container that sits on top of all canvas layers (MapLibre + Deck.gl)
+    const markerLayer = document.createElement("div");
+    markerLayer.className = "mg-markers-layer";
+    container.appendChild(markerLayer);
+
     const ro = new ResizeObserver(() => map.resize());
     ro.observe(container);
     requestAnimationFrame(() => map.resize());
@@ -153,6 +171,7 @@ export default function MapView({
       markers.b?.remove();
       markers.a = null;
       markers.b = null;
+      markerLayer.remove();
       map.removeControl(overlay);
       map.remove();
       mapRef.current = null;
@@ -174,9 +193,17 @@ export default function MapView({
       if (existing) {
         existing.setLngLat([p.lng, p.lat]);
       } else {
-        markersRef.current[key] = new Marker({ element: markerElement(key.toUpperCase()), anchor: "center" })
-          .setLngLat([p.lng, p.lat])
-          .addTo(map);
+        const marker = new Marker({
+          element: createPinElement(key.toUpperCase()),
+          anchor: "bottom",
+          offset: [0, 3],
+        });
+        marker.setLngLat([p.lng, p.lat]).addTo(map);
+        const layer = containerRef.current?.querySelector(".mg-markers-layer");
+        if (layer) {
+          layer.appendChild(marker.getElement());
+        }
+        markersRef.current[key] = marker;
       }
     };
     sync("a", start);
