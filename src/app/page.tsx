@@ -18,6 +18,7 @@ import { LiveStats, type StatColumn } from "../components/LiveStats";
 import { CompareResults } from "../components/CompareResults";
 import { syncMaps } from "../lib/sync-maps";
 import { fmtDuration, fmtKm } from "../lib/format";
+import type { MapStyleId } from "../components/MapView";
 
 // MapView must be loaded client-side only (MapLibre and WebGL require window)
 const MapView = dynamic(() => import("../components/MapView"), {
@@ -55,6 +56,11 @@ const MODE_OPTIONS: readonly SegmentOption<Mode>[] = [
   { value: "compare", label: "Compare" },
 ];
 
+const STYLE_OPTIONS: readonly SegmentOption<MapStyleId>[] = [
+  { value: "streets", label: "Streets" },
+  { value: "satellite", label: "Satellite" },
+];
+
 const ALGO_OPTIONS: readonly SegmentOption<AlgorithmId>[] = ALGORITHMS.map((a) => ({
   value: a.id,
   label: a.name,
@@ -71,6 +77,14 @@ export default function MinGraphApp() {
 
   const [startPoint, setStartPoint] = useState<SelectedPoint | null>(null);
   const [endPoint, setEndPoint] = useState<SelectedPoint | null>(null);
+
+  const [mapStyle, setMapStyle] = useState<MapStyleId>("streets");
+  const [map2Style, setMap2Style] = useState<MapStyleId>("streets");
+
+  const handleGlobalMapStyleChange = (s: MapStyleId) => {
+    setMapStyle(s);
+    setMap2Style(s);
+  };
 
   const [running, setRunning] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -257,18 +271,18 @@ export default function MinGraphApp() {
   // Prepared deck.gl traces
   const simTrace: PreparedTrace | null = useMemo(() => {
     if (!simResult) return null;
-    return prepareTrace(simResult, "blue");
-  }, [simResult]);
+    return prepareTrace(simResult, "blue", mapStyle === "satellite");
+  }, [simResult, mapStyle]);
 
   const compareTrace1: PreparedTrace | null = useMemo(() => {
     if (!allResults) return null;
-    return prepareTrace(allResults[compareAlgos[0]], "blue");
-  }, [allResults, compareAlgos]);
+    return prepareTrace(allResults[compareAlgos[0]], "blue", mapStyle === "satellite");
+  }, [allResults, compareAlgos, mapStyle]);
 
   const compareTrace2: PreparedTrace | null = useMemo(() => {
     if (!allResults) return null;
-    return prepareTrace(allResults[compareAlgos[1]], "terra");
-  }, [allResults, compareAlgos]);
+    return prepareTrace(allResults[compareAlgos[1]], "terra", map2Style === "satellite");
+  }, [allResults, compareAlgos, map2Style]);
 
   const liveColumns: StatColumn[] = useMemo(() => {
     if (mode === "simulate") {
@@ -371,6 +385,17 @@ export default function MinGraphApp() {
         )}
 
         <div className="sidebar-section">
+          <span className="spec-label">Map Style</span>
+          <Segmented
+            id="map-style-picker"
+            label="Map Style"
+            value={mapStyle}
+            options={STYLE_OPTIONS}
+            onChange={handleGlobalMapStyleChange}
+          />
+        </div>
+
+        <div className="sidebar-section">
           <span className="spec-label">Waypoints</span>
           <PointPicker
             start={startPoint}
@@ -450,6 +475,11 @@ export default function MinGraphApp() {
         {mode === "simulate" ? (
           <MapView
             key="map-sim"
+            mapStyle={mapStyle}
+            onMapStyleChange={(s) => {
+              setMapStyle(s);
+              setMap2Style(s);
+            }}
             baseRoads={baseRoads}
             trace={simTrace}
             frontierSizes={simResult ? simResult.frontier : null}
@@ -466,6 +496,8 @@ export default function MinGraphApp() {
           <>
             <MapView
               key={`map-c1-${compareAlgos[0]}`}
+              mapStyle={mapStyle}
+              onMapStyleChange={(s) => setMapStyle(s)}
               baseRoads={baseRoads}
               trace={compareTrace1}
               frontierSizes={allResults ? allResults[compareAlgos[0]].frontier : null}
@@ -484,6 +516,8 @@ export default function MinGraphApp() {
             />
             <MapView
               key={`map-c2-${compareAlgos[1]}`}
+              mapStyle={map2Style}
+              onMapStyleChange={(s) => setMap2Style(s)}
               baseRoads={baseRoads}
               trace={compareTrace2}
               frontierSizes={allResults ? allResults[compareAlgos[1]].frontier : null}

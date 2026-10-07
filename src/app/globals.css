@@ -1036,3 +1036,143 @@ body {
     height: 50vh;
   }
 }
+
+/* Floating Map Style Switcher */
+.map-style-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 15;
+  display: flex;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px;
+  gap: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 180ms ease;
+}
+
+.map-style-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 5px 9px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: all 140ms ease;
+}
+
+.map-style-toggle-btn svg {
+  opacity: 0.75;
+  transition: opacity 140ms ease;
+}
+
+.map-style-toggle-btn:hover:not(.active) {
+  color: var(--ink);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.map-style-toggle-btn.active {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.map-style-toggle-btn.active svg {
+  opacity: 1;
+  color: var(--accent);
+}
+
+/* Satellite theme styling for map frame overlays */
+.map-frame[data-style="satellite"] .map-style-toggle {
+  background-color: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.map-frame[data-style="satellite"] .map-style-toggle-btn {
+  color: rgba(241, 245, 249, 0.7);
+}
+
+.map-frame[data-style="satellite"] .map-style-toggle-btn:hover:not(.active) {
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.map-frame[data-style="satellite"] .map-style-toggle-btn.active {
+  background-color: rgba(30, 41, 59, 0.95);
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.map-frame[data-style="satellite"] .map-style-toggle-btn.active svg {
+  color: #38BDF8;
+}
+
+.map-frame[data-style="satellite"] .map-caption {
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F8FAFC;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-group {
+  background-color: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-group button {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-group button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.2) !important;
+}
+
+.map-frame[data-style="satellite"] .mg-pin {
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+}
+
+.map-frame[data-style="satellite"] .mg-pin-a .mg-pin-badge {
+  background-color: #EA580C !important;
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.map-frame[data-style="satellite"] .mg-pin-b .mg-pin-badge {
+  background-color: #0F172A !important;
+  border-color: #FFFFFF !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib {
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  color: rgba(241, 245, 249, 0.75) !important;
+  border-radius: 3px !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib a {
+  color: rgba(241, 245, 249, 0.9) !important;
+}

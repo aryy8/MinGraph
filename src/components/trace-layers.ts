@@ -25,6 +25,12 @@ export const PALETTES: Record<Hue, Palette> = {
   terra: { pale: [240, 210, 192], deep: [194, 65, 12], frontier: [110, 36, 6], route: [194, 65, 12] },
 };
 
+export const SATELLITE_PALETTES: Record<Hue, Palette> = {
+  // Vibrant luminous ramps that pop with high contrast against dark photographic satellite terrain.
+  blue: { pale: [147, 197, 253], deep: [59, 130, 246], frontier: [96, 165, 250], route: [249, 115, 22] },
+  terra: { pale: [254, 215, 170], deep: [249, 115, 22], frontier: [251, 146, 60], route: [249, 115, 22] },
+};
+
 const PAPER: [number, number, number, number] = [255, 255, 255, 255];
 
 const FILTER = new DataFilterExtension({ filterSize: 1 });
@@ -60,9 +66,9 @@ export interface PreparedTrace {
 
 let serial = 0;
 
-export function prepareTrace(result: RunResult, hue: Hue): PreparedTrace {
+export function prepareTrace(result: RunResult, hue: Hue, isSatellite = false): PreparedTrace {
   const steps = result.steps;
-  const palette = PALETTES[hue];
+  const palette = isSatellite ? SATELLITE_PALETTES[hue] : PALETTES[hue];
   const index = new Float32Array(steps);
   const colors = new Uint8Array(steps * 4);
   const [pr, pg, pb] = palette.pale;
@@ -74,7 +80,7 @@ export function prepareTrace(result: RunResult, hue: Hue): PreparedTrace {
     colors[4 * i] = pr + (dr - pr) * f;
     colors[4 * i + 1] = pg + (dg - pg) * f;
     colors[4 * i + 2] = pb + (db - pb) * f;
-    colors[4 * i + 3] = 235;
+    colors[4 * i + 3] = isSatellite ? 245 : 235;
   }
   const seg = result.segments;
   const explored: BinaryLineData = {
@@ -140,6 +146,8 @@ export function prepareTrace(result: RunResult, hue: Hue): PreparedTrace {
  * @param drawn       explored steps to show
  * @param frontierLen how many of the most recent steps to emphasise
  * @param routeFrac   0..1 draw-in progress of the route
+ * @param routeColor  color for the route
+ * @param isSatellite whether satellite mode is active
  */
 export function traceLayers(
   trace: PreparedTrace,
@@ -147,15 +155,16 @@ export function traceLayers(
   frontierLen: number,
   routeFrac: number,
   routeColor: RGB,
+  isSatellite = false,
 ): Layer[] {
-  const palette = PALETTES[trace.hue];
+  const palette = isSatellite ? SATELLITE_PALETTES[trace.hue] : PALETTES[trace.hue];
   const last = drawn - 1;
   const layers: Layer[] = [
     new LineLayer({
       id: `${trace.key}-explored`,
       data: trace.explored,
       widthUnits: "pixels",
-      getWidth: 1.25,
+      getWidth: isSatellite ? 1.5 : 1.25,
       extensions: [FILTER],
       filterRange: [0, last],
       parameters: { depthCompare: "always" },
@@ -167,7 +176,7 @@ export function traceLayers(
         id: `${trace.key}-frontier`,
         data: trace.frontier,
         widthUnits: "pixels",
-        getWidth: 2.5,
+        getWidth: isSatellite ? 3.0 : 2.5,
         getColor: [...palette.frontier, 255],
         extensions: [FILTER],
         filterRange: [Math.max(0, drawn - frontierLen), last],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Map as MlMap,
   Marker,
@@ -15,7 +15,9 @@ import { LineLayer } from "@deck.gl/layers";
 import type { Layer } from "@deck.gl/core";
 import { JAIPUR_BBOX, JAIPUR_CENTER, type LngLat } from "../lib/graph/geo";
 import type { Playback } from "../lib/playback";
-import { PALETTES, traceLayers, type Hue, type PreparedTrace } from "./trace-layers";
+import { PALETTES, SATELLITE_PALETTES, traceLayers, type Hue, type PreparedTrace } from "./trace-layers";
+
+export type MapStyleId = "streets" | "satellite";
 
 const STYLE_URL = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
@@ -40,7 +42,97 @@ const DEFAULT_STYLE: StyleSpecification = {
   ],
 };
 
+// High-resolution satellite raster basemap with hybrid boundaries & labels
+export const SATELLITE_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    "esri-satellite": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution:
+        "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+    },
+    "esri-reference": {
+      type: "raster",
+      tiles: [
+        "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: "satellite-bg",
+      type: "background",
+      paint: {
+        "background-color": "#0a1118",
+      },
+    },
+    {
+      id: "satellite-imagery",
+      type: "raster",
+      source: "esri-satellite",
+      minzoom: 0,
+      maxzoom: 22,
+    },
+    {
+      id: "satellite-reference",
+      type: "raster",
+      source: "esri-reference",
+      minzoom: 0,
+      maxzoom: 22,
+      paint: {
+        "raster-opacity": 0.85,
+      },
+    },
+  ],
+};
+
+let cachedCartoStyle: StyleSpecification | null = null;
+let cartoStyleLoading = false;
+const cartoWaiters: ((s: StyleSpecification | null) => void)[] = [];
+
+function requestCartoStyle(callback: (s: StyleSpecification | null) => void) {
+  if (cachedCartoStyle) {
+    callback(cachedCartoStyle);
+    return;
+  }
+  cartoWaiters.push(callback);
+  if (cartoStyleLoading) return;
+  cartoStyleLoading = true;
+  fetch(STYLE_URL)
+    .then((res) => {
+      if (!res.ok) throw new Error("CARTO style unavailable");
+      return res.json();
+    })
+    .then(async (cartoStyle) => {
+      const tileCheck = await fetch(
+        "https://tiles.basemaps.cartocdn.com/vector/carto.streets/v1/0/0/0.mvt",
+        { signal: AbortSignal.timeout(1500) }
+      ).catch(() => null);
+      if (tileCheck && tileCheck.ok) {
+        cachedCartoStyle = cartoStyle;
+        while (cartoWaiters.length > 0) cartoWaiters.shift()?.(cartoStyle);
+      } else {
+        while (cartoWaiters.length > 0) cartoWaiters.shift()?.(null);
+      }
+    })
+    .catch(() => {
+      while (cartoWaiters.length > 0) cartoWaiters.shift()?.(null);
+    })
+    .finally(() => {
+      cartoStyleLoading = false;
+    });
+}
+
 export interface MapViewProps {
+  mapStyle?: MapStyleId;
+  onMapStyleChange?: (style: MapStyleId) => void;
   trace: PreparedTrace | null;
   frontierSizes: Int32Array | null;
   baseRoads?: Float32Array | null;
@@ -77,6 +169,8 @@ function createPinElement(label: string): HTMLElement {
 }
 
 export default function MapView({
+  mapStyle: controlledStyle,
+  onMapStyleChange,
   trace,
   frontierSizes,
   baseRoads,
@@ -88,12 +182,31 @@ export default function MapView({
   onMap,
   caption,
 }: MapViewProps) {
+  const [internalStyle, setInternalStyle] = useState<MapStyleId>("streets");
+  const activeStyle = controlledStyle ?? internalStyle;
+
+  const handleStyleChange = useCallback(
+    (newStyle: MapStyleId) => {
+      if (controlledStyle === undefined) {
+        setInternalStyle(newStyle);
+      }
+      onMapStyleChange?.(newStyle);
+    },
+    [controlledStyle, onMapStyleChange]
+  );
+
+  const activeStyleRef = useRef(activeStyle);
+  useEffect(() => {
+    activeStyleRef.current = activeStyle;
+  });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const markersRef = useRef<{ a: Marker | null; b: Marker | null }>({ a: null, b: null });
   const clickRef = useRef(onMapClick);
   const onMapRef = useRef(onMap);
+  const drawRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     clickRef.current = onMapClick;
@@ -106,10 +219,15 @@ export default function MapView({
     if (!container) return;
     const pad = 0.08;
 
-    // Start with the local paper style so initialization is instantaneous and 100% reliable
+    // Pick initial style based on current activeStyle selection
+    const initialStyle =
+      activeStyleRef.current === "satellite"
+        ? SATELLITE_STYLE
+        : cachedCartoStyle || DEFAULT_STYLE;
+
     const map = new MlMap({
       container,
-      style: DEFAULT_STYLE,
+      style: initialStyle,
       maxCanvasSize: [4096, 4096],
       center: [JAIPUR_CENTER.lng, JAIPUR_CENTER.lat],
       zoom: 10.8,
@@ -130,29 +248,23 @@ export default function MapView({
     map.addControl(overlay);
     map.on("click", (e: MapMouseEvent) => clickRef.current({ lng: e.lngLat.lng, lat: e.lngLat.lat }));
 
+    // Redraw deck.gl layers when map style loads or finishes updating
+    map.on("styledata", () => {
+      drawRef.current?.();
+    });
+
     mapRef.current = map;
     overlayRef.current = overlay;
     onMapRef.current?.(map);
 
-    // Asynchronously try to load CARTO Positron if online and accessible
-    fetch(STYLE_URL)
-      .then((res) => {
-        if (!res.ok) throw new Error("CARTO style unavailable");
-        return res.json();
-      })
-      .then(async (cartoStyle) => {
-        // Verify vector tiles are also reachable before applying style
-        const tileCheck = await fetch(
-          "https://tiles.basemaps.cartocdn.com/vector/carto.streets/v1/0/0/0.mvt",
-          { signal: AbortSignal.timeout(1500) }
-        ).catch(() => null);
-        if (tileCheck && tileCheck.ok && mapRef.current) {
+    // If starting in streets mode and CARTO Positron isn't cached yet, fetch it
+    if (activeStyleRef.current === "streets" && !cachedCartoStyle) {
+      requestCartoStyle((cartoStyle) => {
+        if (cartoStyle && mapRef.current && activeStyleRef.current === "streets") {
           mapRef.current.setStyle(cartoStyle);
         }
-      })
-      .catch(() => {
-        // Fallback paper style is already active
       });
+    }
 
     // Dedicated markers container that sits on top of all canvas layers (MapLibre + Deck.gl)
     const markerLayer = document.createElement("div");
@@ -178,6 +290,26 @@ export default function MapView({
       overlayRef.current = null;
     };
   }, []);
+
+  // Dynamically switch map style when activeStyle changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (activeStyle === "satellite") {
+      map.setStyle(SATELLITE_STYLE);
+    } else {
+      if (cachedCartoStyle) {
+        map.setStyle(cachedCartoStyle);
+      } else {
+        requestCartoStyle((style) => {
+          if (mapRef.current && activeStyleRef.current === "streets") {
+            mapRef.current.setStyle(style || DEFAULT_STYLE);
+          }
+        });
+      }
+    }
+  }, [activeStyle]);
 
   // Start / end markers and viewport framing
   useEffect(() => {
@@ -229,11 +361,17 @@ export default function MapView({
     }
   }, [start, end]);
 
-  // Per-frame layer updates, driven by the playback clock
+  // Per-frame layer updates, driven by the playback clock and activeStyle
   useEffect(() => {
     const overlay = overlayRef.current;
     if (!overlay) return;
-    const routeColor = routeHue === "accent" ? ACCENT : PALETTES[routeHue].deep;
+    const isSat = activeStyle === "satellite";
+    const routeColor =
+      routeHue === "accent"
+        ? ACCENT
+        : isSat
+        ? SATELLITE_PALETTES[routeHue].route
+        : PALETTES[routeHue].deep;
 
     const draw = () => {
       const layers: Layer[] = [];
@@ -251,8 +389,8 @@ export default function MapView({
               },
             },
             widthUnits: "pixels",
-            getWidth: 0.85,
-            getColor: [220, 224, 228, 230],
+            getWidth: isSat ? 0.95 : 0.85,
+            getColor: isSat ? [255, 255, 255, 120] : [220, 224, 228, 230],
             parameters: { depthCompare: "always" },
           })
         );
@@ -263,18 +401,32 @@ export default function MapView({
         const drawn = playback.explored(trace.steps);
         const size = drawn > 0 && frontierSizes ? frontierSizes[drawn - 1] : 0;
         const frontierLen = Math.min(4000, Math.max(24, Math.round(size * 0.6)));
-        layers.push(...traceLayers(trace, drawn, frontierLen, playback.routeProgress(trace.steps), routeColor));
+        layers.push(
+          ...traceLayers(
+            trace,
+            drawn,
+            frontierLen,
+            playback.routeProgress(trace.steps),
+            routeColor,
+            isSat
+          )
+        );
       }
 
       overlay.setProps({ layers });
     };
 
+    drawRef.current = draw;
     draw();
     return playback.subscribe(draw);
-  }, [trace, frontierSizes, baseRoads, routeHue, playback]);
+  }, [trace, frontierSizes, baseRoads, routeHue, playback, activeStyle]);
+
+  const captionId = caption?.text
+    ? caption.text.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    : "main";
 
   return (
-    <div className="map-frame">
+    <div className="map-frame" data-style={activeStyle}>
       <div ref={containerRef} className="map-canvas" />
       {caption ? (
         <div className="map-caption">
@@ -282,6 +434,59 @@ export default function MapView({
           {caption.text}
         </div>
       ) : null}
+
+      <div className="map-style-toggle" role="group" aria-label="Map style selection">
+        <button
+          type="button"
+          id={`style-btn-streets-${captionId}`}
+          className={`map-style-toggle-btn ${activeStyle === "streets" ? "active" : ""}`}
+          onClick={() => handleStyleChange("streets")}
+          aria-pressed={activeStyle === "streets"}
+          title="Switch to Streets view (vector basemap)"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+            <line x1="8" y1="2" x2="8" y2="18" />
+            <line x1="16" y1="6" x2="16" y2="22" />
+          </svg>
+          <span>Streets</span>
+        </button>
+        <button
+          type="button"
+          id={`style-btn-satellite-${captionId}`}
+          className={`map-style-toggle-btn ${activeStyle === "satellite" ? "active" : ""}`}
+          onClick={() => handleStyleChange("satellite")}
+          aria-pressed={activeStyle === "satellite"}
+          title="Switch to Satellite view (aerial imagery)"
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
+          <span>Satellite</span>
+        </button>
+      </div>
     </div>
   );
 }
