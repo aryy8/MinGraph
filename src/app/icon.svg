@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Container squircle in MinGraph dark ink (#111827) with subtle hairline border -->
+  <rect width="32" height="32" rx="7" fill="#111827"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+  
+  <!-- Graph network road connections -->
+  <line x1="7" y1="23.5" x2="16" y2="17" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="16" y1="17" x2="25" y2="23.5" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
+  <line x1="7" y1="23.5" x2="25" y2="23.5" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
+  
+  <!-- Solved Shortest Path (M) in signature Terracotta -->
+  <polyline points="7,23.5 7,8.5 16,17 25,8.5 25,23.5" fill="none" stroke="#EA580C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Intermediate graph vertices -->
+  <circle cx="7" cy="8.5" r="2.3" fill="#FFFFFF"/>
+  <circle cx="25" cy="8.5" r="2.3" fill="#FFFFFF"/>
+  
+  <!-- Mid apex frontier node -->
+  <circle cx="16" cy="17" r="2.3" fill="#FFFFFF"/>
+  <circle cx="16" cy="17" r="1.1" fill="#EA580C"/>
+  
+  <!-- Start Node (A) - White marker with dark ink center -->
+  <circle cx="7" cy="23.5" r="3.0" fill="#FFFFFF"/>
+  <circle cx="7" cy="23.5" r="1.4" fill="#111827"/>
+  
+  <!-- End Node (B) - Terracotta marker with white center -->
+  <circle cx="25" cy="23.5" r="3.2" fill="#EA580C"/>
+  <circle cx="25" cy="23.5" r="1.5" fill="#FFFFFF"/>
+</svg>
