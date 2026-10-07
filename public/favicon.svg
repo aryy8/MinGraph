@@ -1,29 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <!-- Container squircle in MinGraph dark ink (#111827) with subtle hairline border -->
-  <rect width="32" height="32" rx="7" fill="#111827"/>
-  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
-  
-  <!-- Graph network road connections -->
-  <line x1="7" y1="23.5" x2="16" y2="17" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="16" y1="17" x2="25" y2="23.5" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
-  <line x1="7" y1="23.5" x2="25" y2="23.5" stroke="#243044" stroke-width="1.6" stroke-linecap="round"/>
-  
-  <!-- Solved Shortest Path (M) in signature Terracotta -->
-  <polyline points="7,23.5 7,8.5 16,17 25,8.5 25,23.5" fill="none" stroke="#EA580C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Intermediate graph vertices -->
-  <circle cx="7" cy="8.5" r="2.3" fill="#FFFFFF"/>
-  <circle cx="25" cy="8.5" r="2.3" fill="#FFFFFF"/>
-  
-  <!-- Mid apex frontier node -->
-  <circle cx="16" cy="17" r="2.3" fill="#FFFFFF"/>
-  <circle cx="16" cy="17" r="1.1" fill="#EA580C"/>
-  
-  <!-- Start Node (A) - White marker with dark ink center -->
-  <circle cx="7" cy="23.5" r="3.0" fill="#FFFFFF"/>
-  <circle cx="7" cy="23.5" r="1.4" fill="#111827"/>
-  
-  <!-- End Node (B) - Terracotta marker with white center -->
-  <circle cx="25" cy="23.5" r="3.2" fill="#EA580C"/>
-  <circle cx="25" cy="23.5" r="1.5" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <filter id="appShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="3.5" flood-color="#3c4043" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <!-- App Icon Squircle Container -->
+  <rect x="6" y="6" width="116" height="116" rx="26" fill="#FFFFFF" filter="url(#appShadow)"/>
+  <rect x="6.5" y="6.5" width="115" height="115" rx="25.5" fill="none" stroke="#E8EAED" stroke-width="1"/>
+
+  <!-- MinGraph 6 Network Edges -->
+  <line x1="36" y1="36" x2="36" y2="92" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+  <line x1="92" y1="36" x2="92" y2="92" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+  <line x1="36" y1="36" x2="64" y2="64" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+  <line x1="64" y1="64" x2="92" y2="36" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+  <line x1="36" y1="92" x2="64" y2="64" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+  <line x1="64" y1="64" x2="92" y2="92" stroke="#B8D3FB" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- 5 Nodes in Google Colors -->
+  <circle cx="36" cy="36" r="13" fill="#4285F4"/>
+  <circle cx="92" cy="36" r="13" fill="#EA4335"/>
+  <circle cx="64" cy="64" r="13" fill="#FBBC04"/>
+  <circle cx="36" cy="92" r="13" fill="#34A853"/>
+  <circle cx="92" cy="92" r="13" fill="#4285F4"/>
 </svg>
