@@ -13,7 +13,7 @@ import {
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { LineLayer } from "@deck.gl/layers";
 import type { Layer } from "@deck.gl/core";
-import { JAIPUR_BBOX, JAIPUR_CENTER, type LngLat } from "../lib/graph/geo";
+import { DEFAULT_BBOX, DEFAULT_CENTER, type LngLat } from "../lib/graph/geo";
 import type { Playback } from "../lib/playback";
 import { PALETTES, SATELLITE_PALETTES, traceLayers, type Hue, type PreparedTrace } from "./trace-layers";
 
@@ -130,6 +130,45 @@ function requestCartoStyle(callback: (s: StyleSpecification | null) => void) {
     });
 }
 
+function ensureSatelliteLayers(map: MlMap, isSat: boolean) {
+  if (!map.isStyleLoaded()) return;
+
+  if (!map.getSource("esri-satellite")) {
+    map.addSource("esri-satellite", SATELLITE_STYLE.sources["esri-satellite"]);
+  }
+  if (!map.getSource("esri-reference")) {
+    map.addSource("esri-reference", SATELLITE_STYLE.sources["esri-reference"]);
+  }
+
+  if (!map.getLayer("satellite-imagery")) {
+    map.addLayer({
+      id: "satellite-imagery",
+      type: "raster",
+      source: "esri-satellite",
+      minzoom: 0,
+      maxzoom: 22,
+      paint: {
+        "raster-opacity": isSat ? 1 : 0,
+        "raster-opacity-transition": { duration: 400, delay: 0 },
+      },
+    });
+  }
+
+  if (!map.getLayer("satellite-reference")) {
+    map.addLayer({
+      id: "satellite-reference",
+      type: "raster",
+      source: "esri-reference",
+      minzoom: 0,
+      maxzoom: 22,
+      paint: {
+        "raster-opacity": isSat ? 0.85 : 0,
+        "raster-opacity-transition": { duration: 400, delay: 0 },
+      },
+    });
+  }
+}
+
 export interface MapViewProps {
   mapStyle?: MapStyleId;
   onMapStyleChange?: (style: MapStyleId) => void;
@@ -219,23 +258,20 @@ export default function MapView({
     if (!container) return;
     const pad = 0.08;
 
-    // Pick initial style based on current activeStyle selection
-    const initialStyle =
-      activeStyleRef.current === "satellite"
-        ? SATELLITE_STYLE
-        : cachedCartoStyle || DEFAULT_STYLE;
+    // Use Carto streets style or default as base, layering satellite on top
+    const initialStyle = cachedCartoStyle || DEFAULT_STYLE;
 
     const map = new MlMap({
       container,
       style: initialStyle,
       maxCanvasSize: [4096, 4096],
-      center: [JAIPUR_CENTER.lng, JAIPUR_CENTER.lat],
+      center: [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat],
       zoom: 10.8,
       minZoom: 9.0,
       maxZoom: 18,
       maxBounds: [
-        [JAIPUR_BBOX.west - pad, JAIPUR_BBOX.south - pad],
-        [JAIPUR_BBOX.east + pad, JAIPUR_BBOX.north + pad],
+        [DEFAULT_BBOX.west - pad, DEFAULT_BBOX.south - pad],
+        [DEFAULT_BBOX.east + pad, DEFAULT_BBOX.north + pad],
       ],
       attributionControl: { compact: true },
       dragRotate: false,
@@ -248,9 +284,14 @@ export default function MapView({
     map.addControl(overlay);
     map.on("click", (e: MapMouseEvent) => clickRef.current({ lng: e.lngLat.lng, lat: e.lngLat.lat }));
 
-    // Redraw deck.gl layers when map style loads or finishes updating
+    // Ensure satellite layers exist on any style update, and redraw deck.gl
     map.on("styledata", () => {
+      ensureSatelliteLayers(map, activeStyleRef.current === "satellite");
       drawRef.current?.();
+    });
+
+    map.on("load", () => {
+      ensureSatelliteLayers(map, activeStyleRef.current === "satellite");
     });
 
     mapRef.current = map;
@@ -258,9 +299,9 @@ export default function MapView({
     onMapRef.current?.(map);
 
     // If starting in streets mode and CARTO Positron isn't cached yet, fetch it
-    if (activeStyleRef.current === "streets" && !cachedCartoStyle) {
+    if (!cachedCartoStyle) {
       requestCartoStyle((cartoStyle) => {
-        if (cartoStyle && mapRef.current && activeStyleRef.current === "streets") {
+        if (cartoStyle && mapRef.current) {
           mapRef.current.setStyle(cartoStyle);
         }
       });
@@ -291,23 +332,20 @@ export default function MapView({
     };
   }, []);
 
-  // Dynamically switch map style when activeStyle changes
+  // Smoothly cross-fade satellite raster layer on/off when activeStyle changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    if (activeStyle === "satellite") {
-      map.setStyle(SATELLITE_STYLE);
+    const isSat = activeStyle === "satellite";
+    if (map.getLayer("satellite-imagery")) {
+      map.setPaintProperty("satellite-imagery", "raster-opacity", isSat ? 1 : 0);
     } else {
-      if (cachedCartoStyle) {
-        map.setStyle(cachedCartoStyle);
-      } else {
-        requestCartoStyle((style) => {
-          if (mapRef.current && activeStyleRef.current === "streets") {
-            mapRef.current.setStyle(style || DEFAULT_STYLE);
-          }
-        });
-      }
+      ensureSatelliteLayers(map, isSat);
+    }
+
+    if (map.getLayer("satellite-reference")) {
+      map.setPaintProperty("satellite-reference", "raster-opacity", isSat ? 0.85 : 0);
     }
   }, [activeStyle]);
 
