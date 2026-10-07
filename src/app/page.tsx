@@ -19,6 +19,19 @@ import { CompareResults } from "../components/CompareResults";
 import { syncMaps } from "../lib/sync-maps";
 import { fmtDuration, fmtKm } from "../lib/format";
 import type { MapStyleId } from "../components/MapView";
+import {
+  MinGraphLogo,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DirectionsIcon,
+  AlgorithmIcon,
+  ModeCompareIcon,
+  LayersIcon,
+  StatsChartIcon,
+  PlayIcon,
+  PauseIcon,
+} from "../components/icons";
+import { SidebarRail } from "../components/SidebarRail";
 
 // MapView must be loaded client-side only (MapLibre and WebGL require window)
 const MapView = dynamic(() => import("../components/MapView"), {
@@ -74,6 +87,7 @@ export default function MinGraphApp() {
   const [mode, setMode] = useState<Mode>("simulate");
   const [simAlgo, setSimAlgo] = useState<AlgorithmId>("astar");
   const [compareAlgos, setCompareAlgos] = useState<[AlgorithmId, AlgorithmId]>(["dijkstra", "astar"]);
+  const [collapsed, setCollapsed] = useState(false);
 
   const [startPoint, setStartPoint] = useState<SelectedPoint | null>(null);
   const [endPoint, setEndPoint] = useState<SelectedPoint | null>(null);
@@ -103,6 +117,15 @@ export default function MinGraphApp() {
   const map1Ref = useRef<MlMap | null>(null);
   const map2Ref = useRef<MlMap | null>(null);
 
+  // Resize maps when sidebar is collapsed or expanded
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map1Ref.current?.resize();
+      map2Ref.current?.resize();
+    }, 260);
+    return () => clearTimeout(timer);
+  }, [collapsed]);
+
   // Load the graph once on mount
   useEffect(() => {
     loadGraph()
@@ -121,19 +144,25 @@ export default function MinGraphApp() {
     return syncMaps(map1Ref.current, map2Ref.current);
   }, [mode, map1Ref.current, map2Ref.current]);
 
-  // Keyboard shortcut: Space toggles play/pause
+  // Keyboard shortcut: Space toggles play/pause, [ or Ctrl+B toggles sidebar
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && e.target === document.body) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.code === "Space") {
         e.preventDefault();
         playback.toggle();
+      } else if (e.key === "[" || (e.ctrlKey && e.key === "b")) {
+        e.preventDefault();
+        setCollapsed((c) => !c);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [playback]);
 
-  // Snapping function: snaps any location in or close to Jaipur to the road network
+  // Snapping function: snaps any selected location to the road network
   const handleSnap = useCallback(
     (coords: LngLat): { nodeId: number; snapDistance: number } | null => {
       if (!spatialIndex || !graph) return null;
@@ -143,7 +172,7 @@ export default function MinGraphApp() {
         return null;
       }
       if (match.distance > 60000) {
-        setStatusMessage(`Selected location is too far from Jaipur road network (${fmtKm(match.distance)}).`);
+        setStatusMessage(`Selected location is too far from road network (${fmtKm(match.distance)}).`);
         return null;
       }
       if (match.distance > 2500) {
@@ -298,17 +327,79 @@ export default function MinGraphApp() {
 
   const primaryResult = mode === "simulate" ? simResult : allResults ? allResults[compareAlgos[0]] : null;
 
+  const activeAlgoName = useMemo(() => {
+    return ALGORITHMS.find((a) => a.id === (mode === "simulate" ? simAlgo : compareAlgos[0]))?.name || "A*";
+  }, [mode, simAlgo, compareAlgos]);
+
+  const activeAlgoShort = useMemo(() => {
+    if (mode === "compare") return "COMP";
+    return simAlgo === "astar" ? "A*" : simAlgo === "dijkstra" ? "DIJ" : simAlgo === "bfs" ? "BFS" : "BI";
+  }, [mode, simAlgo]);
+
   return (
     <div className="app-container">
-      <aside className="sidebar">
-        <header className="app-header">
-          <h1 className="brand-title">MinGraph</h1>
-          <p className="brand-subtitle">Jaipur Road Network Pathfinding</p>
-        </header>
+      <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
+        {collapsed ? (
+          <SidebarRail
+            onExpand={() => setCollapsed(false)}
+            startPoint={startPoint}
+            endPoint={endPoint}
+            mode={mode}
+            onToggleMode={() => {
+              setMode(mode === "simulate" ? "compare" : "simulate");
+              playback.clear();
+              setStatusMessage(null);
+            }}
+            algorithmName={activeAlgoName}
+            algorithmShort={activeAlgoShort}
+            mapStyle={mapStyle}
+            onToggleMapStyle={() => {
+              const next = mapStyle === "streets" ? "satellite" : "streets";
+              setMapStyle(next);
+              setMap2Style(next);
+            }}
+            running={running}
+            playing={playback.playing}
+            hasResult={Boolean(simResult || allResults)}
+            onRunOrTogglePlay={() => {
+              if (!simResult && !allResults) {
+                handleRun();
+              } else {
+                playback.toggle();
+              }
+            }}
+            canRun={Boolean(graph && (startPoint || endPoint))}
+            primaryResult={primaryResult}
+          />
+        ) : (
+          <>
+            <header className="app-header">
+              <div className="brand-lockup">
+                <div className="google-brand-mark" aria-hidden="true">
+                  <MinGraphLogo size={24} />
+                </div>
+                <div className="brand-text">
+                  <div className="brand-title-wrap">
+                    <h1 className="brand-title">MinGraph</h1>
+                    <span className="google-chip">Maps Lab</span>
+                  </div>
+                  <p className="brand-subtitle">Road Network Pathfinding</p>
+                </div>
+                <button
+                  type="button"
+                  className="sidebar-toggle-btn"
+                  onClick={() => setCollapsed(true)}
+                  title="Collapse side panel (Ctrl+[)"
+                  aria-label="Collapse side panel"
+                >
+                  <ChevronLeftIcon />
+                </button>
+              </div>
+            </header>
 
         {graphError ? (
           <div className="sidebar-section">
-            <div className="message-banner">{graphError}</div>
+            <div className="message-banner message-banner-error">{graphError}</div>
           </div>
         ) : null}
 
@@ -366,7 +457,7 @@ export default function MinGraphApp() {
               </div>
               <div>
                 <span className="spec-label" style={{ fontSize: 9, marginBottom: 4 }}>
-                  <span className="swatch swatch-terra" aria-hidden /> Map 2 (Terracotta)
+                  <span className="swatch swatch-terra" aria-hidden /> Map 2 (Red)
                 </span>
                 <Segmented
                   id="compare-2"
@@ -415,21 +506,48 @@ export default function MinGraphApp() {
             className="primary-btn"
             disabled={!graph || !startPoint || !endPoint || running}
             onClick={handleRun}
+            title={
+              !startPoint
+                ? "Select a starting point"
+                : !endPoint
+                ? "Select a destination"
+                : running
+                ? "Finding optimal route..."
+                : "Find optimal route"
+            }
           >
-            {running ? "Computing..." : "Run Search"}
+            {running ? (
+              <>
+                <svg className="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+                </svg>
+                <span>Finding Route...</span>
+              </>
+            ) : (
+              <>
+                <DirectionsIcon />
+                <span>{mode === "simulate" ? "Find Route" : "Run Comparison"}</span>
+              </>
+            )}
           </button>
 
           {statusMessage ? <div className="message-banner">{statusMessage}</div> : null}
 
           {primaryResult && primaryResult.found ? (
-            <div className="route-summary">
-              <div className="summary-metric">
-                <span className="summary-label">Route Length</span>
-                <span className="summary-val">{fmtKm(primaryResult.distance)}</span>
+            <div className="route-summary-card">
+              <div className="route-summary-top">
+                <div className="route-time">{fmtDuration(primaryResult.distance)}</div>
+                <div className="route-fastest-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                  </svg>
+                  <span>Fastest route</span>
+                </div>
               </div>
-              <div className="summary-metric">
-                <span className="summary-label">Drive Time (~25 km/h)</span>
-                <span className="summary-val">{fmtDuration(primaryResult.distance)}</span>
+              <div className="route-summary-meta">
+                <span className="route-dist">{fmtKm(primaryResult.distance)}</span>
+                <span className="route-meta-dot">•</span>
+                <span>Road Network (~25 km/h)</span>
               </div>
             </div>
           ) : null}
@@ -465,10 +583,12 @@ export default function MinGraphApp() {
                 {graph.meta.source}.
               </>
             ) : (
-              "Loading Jaipur road network..."
+              "Loading road network..."
             )}
           </div>
         </footer>
+          </>
+        )}
       </aside>
 
       <main className="map-stage" data-mode={mode}>

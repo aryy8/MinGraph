@@ -16,11 +16,11 @@ export function CompareResults({ results, compareAlgos }: CompareResultsProps) {
 
   const maxVisited = Math.max(...summary.rows.map((r) => r.nodesVisited), 1);
 
-  // Colors according to spec: algorithm A uses ink-blue (#1F4E79), algorithm B uses terracotta (#C2410C), others neutral ink (#64748B)
+  // Colors according to Google theme: algorithm A uses Google Blue (#1a73e8), algorithm B uses Google Red (#ea4335), others neutral slate (#5f6368)
   const barColor = (id: AlgorithmId) => {
-    if (id === compareAlgos[0]) return "#1F4E79";
-    if (id === compareAlgos[1]) return "#C2410C";
-    return "#78716C";
+    if (id === compareAlgos[0]) return "#1a73e8";
+    if (id === compareAlgos[1]) return "#ea4335";
+    return "#5f6368";
   };
 
   return (

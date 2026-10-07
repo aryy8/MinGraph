@@ -149,7 +149,7 @@ function AutocompleteInput({
           {loading ? <li className="autocomplete-status">Searching...</li> : null}
           {error ? <li className="autocomplete-error">{error}</li> : null}
           {!loading && !error && results.length === 0 ? (
-            <li className="autocomplete-status">No matching places found in or near Jaipur</li>
+            <li className="autocomplete-status">No matching places found</li>
           ) : null}
           {!loading &&
             results.map((r) => (
@@ -160,10 +160,17 @@ function AutocompleteInput({
                 className="autocomplete-item"
                 onClick={() => handlePick(r)}
               >
-                <div className="item-title">{r.name.split(",")[0]}</div>
-                <div className="item-subtitle">
-                  {r.distanceKm !== undefined ? `${r.distanceKm} km • ` : ""}
-                  {r.name}
+                <div className="autocomplete-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                  </svg>
+                </div>
+                <div className="autocomplete-text">
+                  <div className="item-title">{r.name.split(",")[0]}</div>
+                  <div className="item-subtitle">
+                    {r.distanceKm !== undefined ? `${r.distanceKm} km • ` : ""}
+                    {r.name}
+                  </div>
                 </div>
               </li>
             ))}
@@ -202,56 +209,87 @@ export function PointPicker({
 
   return (
     <div className="point-picker">
-      <div className="picker-inputs">
-        <AutocompleteInput
-          id="point-start"
-          label="A"
-          placeholder="Set start location or click map"
-          value={start ? start.label : ""}
-          selected={start}
-          onSelect={onSelectStart}
-          onClear={() => onSelectStart(null)}
-          onSnap={onSnap}
-          disabled={disabled}
-        />
-        <div className="swap-row">
-          <button
-            type="button"
-            className="swap-btn"
-            aria-label="Swap start and end points"
-            disabled={disabled || (!start && !end)}
-            onClick={onSwap}
-          >
-            <SwapIcon />
-          </button>
+      <div className="directions-box">
+        <div className="directions-rail" aria-hidden="true">
+          <span className="rail-dot rail-dot-start" />
+          <span className="rail-line" />
+          <span className="rail-dot rail-dot-end" />
         </div>
-        <AutocompleteInput
-          id="point-end"
-          label="B"
-          placeholder="Set destination or click map"
-          value={end ? end.label : ""}
-          selected={end}
-          onSelect={onSelectEnd}
-          onClear={() => onSelectEnd(null)}
-          onSnap={onSnap}
-          disabled={disabled}
-        />
+
+        <div className="directions-fields">
+          <AutocompleteInput
+            id="point-start"
+            label="A"
+            placeholder="Starting point"
+            value={start ? start.label : ""}
+            selected={start}
+            onSelect={onSelectStart}
+            onClear={() => onSelectStart(null)}
+            onSnap={onSnap}
+            disabled={disabled}
+          />
+          <AutocompleteInput
+            id="point-end"
+            label="B"
+            placeholder="Destination"
+            value={end ? end.label : ""}
+            selected={end}
+            onSelect={onSelectEnd}
+            onClear={() => onSelectEnd(null)}
+            onSnap={onSnap}
+            disabled={disabled}
+          />
+        </div>
+
+        <button
+          type="button"
+          className="swap-btn-floating"
+          aria-label="Reverse start and destination"
+          title="Reverse start and destination"
+          disabled={disabled || (!start && !end)}
+          onClick={onSwap}
+        >
+          <SwapIcon />
+        </button>
       </div>
 
       <div className="landmarks-section">
         <span className="spec-label">Quick Pick</span>
         <div className="landmarks-row">
-          {LANDMARKS.map((lm) => (
-            <button
-              key={lm.id}
-              type="button"
-              className="landmark-btn"
-              disabled={disabled}
-              onClick={() => handleLandmark(lm)}
-            >
-              {lm.name}
-            </button>
-          ))}
+          {LANDMARKS.map((lm) => {
+            const isStart = start?.label === lm.name;
+            const isEnd = end?.label === lm.name;
+            const isSelected = isStart || isEnd;
+            const tooltip = isStart
+              ? `${lm.name} is selected as Start (A)`
+              : isEnd
+              ? `${lm.name} is selected as Destination (B)`
+              : !start
+              ? `Select ${lm.name} as Starting Point (A)`
+              : `Select ${lm.name} as Destination (B)`;
+
+            return (
+              <button
+                key={lm.id}
+                type="button"
+                className={`landmark-btn ${isSelected ? "landmark-btn-selected" : ""}`}
+                disabled={disabled}
+                title={tooltip}
+                aria-label={tooltip}
+                onClick={() => handleLandmark(lm)}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5-2.5 2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
+                <span>{lm.name}</span>
+                {isSelected ? (
+                  <span className={`landmark-role-chip landmark-role-${isStart ? "a" : "b"}`}>
+                    {isStart ? "A" : "B"}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

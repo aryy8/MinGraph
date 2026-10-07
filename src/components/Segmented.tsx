@@ -64,7 +64,23 @@ export function Segmented<T extends string>({ label, value, options, onChange, i
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => onKey(e, i)}
           >
-            {opt.label}
+            {active ? (
+              <svg
+                className="segment-check"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : null}
+            <span className="segment-label">{opt.label}</span>
           </button>
         );
       })}
