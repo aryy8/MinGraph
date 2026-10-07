@@ -380,8 +380,9 @@ export default function MinGraphApp() {
                 </div>
                 <div className="brand-text">
                   <div className="brand-title-wrap">
-                    <h1 className="brand-title">MinGraph</h1>
-                    <span className="google-chip">Maps Lab</span>
+                    <h1 className="brand-title">
+                      <strong className="brand-title-bold">Min</strong>Graph
+                    </h1>
                   </div>
                   <p className="brand-subtitle">Road Network Pathfinding</p>
                 </div>
