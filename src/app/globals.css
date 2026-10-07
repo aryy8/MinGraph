@@ -1665,12 +1665,56 @@ body {
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
-.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib {
-  background-color: rgba(15, 23, 42, 0.75) !important;
-  color: rgba(241, 245, 249, 0.75) !important;
-  border-radius: 3px !important;
+/* Keep the i attribution button visible while keeping its info text hidden */
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-inner {
+  display: none !important;
 }
 
-.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib a {
-  color: rgba(241, 245, 249, 0.9) !important;
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
+
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button,
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  background-color: #FFFFFF !important;
+  color: #5F6368 !important;
+  border-radius: 50% !important;
+  width: 24px !important;
+  height: 24px !important;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button:hover,
+.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button:hover {
+  background-color: #F8F9FA !important;
+  color: #1A73E8 !important;
+  transform: scale(1.08);
+  box-shadow: 0 2px 6px rgba(60, 64, 67, 0.35) !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button,
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button {
+  background-color: rgba(30, 41, 59, 0.85) !important;
+  color: #E2E8F0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button:hover,
+.map-frame[data-style="satellite"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button:hover {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  color: #FFFFFF !important;
+}
+

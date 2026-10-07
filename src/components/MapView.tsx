@@ -284,14 +284,24 @@ export default function MapView({
     map.addControl(overlay);
     map.on("click", (e: MapMouseEvent) => clickRef.current({ lng: e.lngLat.lng, lat: e.lngLat.lat }));
 
+    const updateAttribTitle = () => {
+      const btn = container.querySelector<HTMLElement>(".maplibregl-ctrl-attrib-button");
+      if (btn) {
+        btn.setAttribute("title", "Map data & attributions (OpenStreetMap, CARTO, Esri)");
+        btn.setAttribute("aria-label", "Map data & attributions");
+      }
+    };
+
     // Ensure satellite layers exist on any style update, and redraw deck.gl
     map.on("styledata", () => {
       ensureSatelliteLayers(map, activeStyleRef.current === "satellite");
+      updateAttribTitle();
       drawRef.current?.();
     });
 
     map.on("load", () => {
       ensureSatelliteLayers(map, activeStyleRef.current === "satellite");
+      updateAttribTitle();
     });
 
     mapRef.current = map;
