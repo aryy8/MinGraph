@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { haversine, JAIPUR_CENTER } from "@/lib/graph/geo";
+import { haversine, DEFAULT_CENTER } from "@/lib/graph/geo";
 
 export interface GeocodeResult {
   placeId: string;
@@ -16,7 +16,7 @@ interface NominatimItem {
   lon: string;
 }
 
-// Generous bounding box covering Jaipur city and all surrounding suburbs, towns, and bypasses
+// Bounding viewbox covering active road network region
 const REGION_VIEWBOX = "75.20,27.35,76.40,26.45";
 
 async function queryNominatim(query: string, useViewbox = true): Promise<NominatimItem[]> {
@@ -28,13 +28,12 @@ async function queryNominatim(query: string, useViewbox = true): Promise<Nominat
   url.searchParams.set("countrycodes", "in");
   if (useViewbox) {
     url.searchParams.set("viewbox", REGION_VIEWBOX);
-    // bounded=0 gives high preference to Jaipur region without discarding close matches
     url.searchParams.set("bounded", "0");
   }
 
   const res = await fetch(url.toString(), {
     headers: {
-      "User-Agent": "MinGraph/1.0 (Jaipur Road Network Visualizer; contact: info@mingraph.local)",
+      "User-Agent": "MinGraph/1.0 (Road Network Visualizer; contact: info@mingraph.local)",
       Accept: "application/json",
     },
     next: { revalidate: 3600 },
@@ -56,11 +55,10 @@ export async function GET(request: NextRequest) {
     // 1. Search with regional viewbox bias
     const primaryItems = await queryNominatim(q, true);
 
-    // 2. If few results and query doesn't explicitly mention Jaipur/Rajasthan, also try contextual search
+    // 2. If few results, also try broader search
     let secondaryItems: NominatimItem[] = [];
-    const lower = q.toLowerCase();
-    if (primaryItems.length < 4 && !lower.includes("jaipur") && !lower.includes("rajasthan")) {
-      secondaryItems = await queryNominatim(`${q}, Jaipur`, true);
+    if (primaryItems.length < 4) {
+      secondaryItems = await queryNominatim(q, false);
     }
 
     // 3. Deduplicate by place_id and coordinate proximity
@@ -74,12 +72,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 4. Calculate distance to Jaipur center and prioritize places close to Jaipur
+    // 4. Calculate distance to map center and prioritize nearby places
     const results: GeocodeResult[] = combined
       .map((item) => {
         const lat = parseFloat(item.lat);
         const lng = parseFloat(item.lon);
-        const distM = haversine(lng, lat, JAIPUR_CENTER.lng, JAIPUR_CENTER.lat);
+        const distM = haversine(lng, lat, DEFAULT_CENTER.lng, DEFAULT_CENTER.lat);
         return {
           placeId: String(item.place_id),
           name: item.display_name,
@@ -88,7 +86,7 @@ export async function GET(request: NextRequest) {
           distanceKm: Math.round(distM / 100) / 10,
         };
       })
-      // Sort by proximity to Jaipur center so local/nearby places rank first
+      // Sort by proximity to map center
       .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0))
       .slice(0, 5);
 

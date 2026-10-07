@@ -3,9 +3,11 @@ export interface LngLat {
   lat: number;
 }
 
-/** Graph coverage: greater Jaipur from Manipal & Bagru in west to Amer & Kukas in north, Sitapura & Ring Road south, Bassi east. */
-export const JAIPUR_BBOX = { west: 75.50, south: 26.70, east: 76.05, north: 27.10 } as const;
-export const JAIPUR_CENTER: LngLat = { lng: 75.78, lat: 26.90 };
+/** Graph coverage: regional network bounding box. */
+export const DEFAULT_BBOX = { west: 75.50, south: 26.70, east: 76.05, north: 27.10 } as const;
+export const DEFAULT_CENTER: LngLat = { lng: 75.78, lat: 26.90 };
+export const JAIPUR_BBOX = DEFAULT_BBOX;
+export const JAIPUR_CENTER = DEFAULT_CENTER;
 
 export interface Landmark extends LngLat {
   id: string;
@@ -14,9 +16,9 @@ export interface Landmark extends LngLat {
 
 export const LANDMARKS: readonly Landmark[] = [
   { id: "hawa-mahal", name: "Hawa Mahal", lat: 26.92388, lng: 75.82673 },
-  { id: "jaipur-junction", name: "Jaipur Junction", lat: 26.91982, lng: 75.78757 },
+  { id: "central-junction", name: "Central Junction", lat: 26.91982, lng: 75.78757 },
   { id: "amer-fort", name: "Amer Fort", lat: 26.98553, lng: 75.85133 },
-  { id: "jaipur-airport", name: "Jaipur Airport", lat: 26.82418, lng: 75.81215 },
+  { id: "airport", name: "Airport", lat: 26.82418, lng: 75.81215 },
   { id: "manipal-univ", name: "Manipal Univ", lat: 26.8429, lng: 75.5654 },
   { id: "albert-hall", name: "Albert Hall", lat: 26.91164, lng: 75.81954 },
 ];
@@ -32,7 +34,7 @@ export function haversine(lng1: number, lat1: number, lng2: number, lat2: number
 }
 
 export function insideBbox(p: LngLat): boolean {
-  return p.lng >= JAIPUR_BBOX.west && p.lng <= JAIPUR_BBOX.east && p.lat >= JAIPUR_BBOX.south && p.lat <= JAIPUR_BBOX.north;
+  return p.lng >= DEFAULT_BBOX.west && p.lng <= DEFAULT_BBOX.east && p.lat >= DEFAULT_BBOX.south && p.lat <= DEFAULT_BBOX.north;
 }
 
 /** City driving average used for drive time estimates. */

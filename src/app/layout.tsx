@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MinGraph",
-  description: "An animated pathfinding visualizer on the real road network of Jaipur, India.",
+  description: "An animated road network pathfinding visualizer.",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
